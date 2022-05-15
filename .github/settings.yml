@@ -1,0 +1,5 @@
+---
+repository:
+  description: Control the Logitech Litra Glow light via the Shortcuts app on MacOS (and via the command-line).
+  homepage: https://mesd.ag/
+  topics: litra glow, macos, shortcuts

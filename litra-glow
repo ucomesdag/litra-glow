@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+
+# Copyright (C) 2022 Uco Mesdag
+# Description:  Control the Logitech Litra Glow light.
+# Usage:        ./litra-glow [OPTIONS]
+#   on|off           Turn the Litra Glow on or off.
+
+#   glow             Set the brighness to 10%.
+#   dim              Set the brighness to 20%.
+#   normal           Set the brighness to 40%.
+#   medium           Set the brighness to 60%.
+#   bright           Set the brighness to 80%.
+#   brightest        Set the brighness to 100%.
+
+#   warmest          Set the colour temperature to 2700K.
+#   warm             Set the colour temperature to 3000K.
+#   mild             Set the colour temperature to 3500K.
+#   neutral          Set the colour temperature to 4000K.
+#   cool             Set the colour temperature to 5000K.
+#   cold             Set the colour temperature to 5500K.
+#   coldest          Set the colour temperature to 6500K.
+
+# Note:         You can give multiple options separted by a space
+#               (e.g. $(basename $0) on normal warm).
+
+# Litra Glow hex codes from: https://github.com/kharyam/litra-driver/blob/main/src/llgd/lib/llgd_lib.py
+
+usage()
+{
+  cat <<EOF
+Usage:
+    $(basename $0) [OPTIONS]
+
+Control the Logitech Litra Glow.
+
+Options:
+    on|off           Turn the Litra Glow on or off.
+
+    glow             Set the brighness to 10%.
+    dim              Set the brighness to 20%.
+    normal           Set the brighness to 40%.
+    medium           Set the brighness to 60%.
+    bright           Set the brighness to 80%.
+    brightest        Set the brighness to 100%.
+
+    warmest          Set the colour temperature to 2700K.
+    warm             Set the colour temperature to 3000K.
+    mild             Set the colour temperature to 3500K.
+    neutral          Set the colour temperature to 4000K.
+    cool             Set the colour temperature to 5000K.
+    cold             Set the colour temperature to 5500K.
+    coldest          Set the colour temperature to 6500K.
+
+Note that you can give multiple options separted by a space
+(e.g. $(basename $0) on normal warm).
+EOF
+}
+
+[ $# -eq 0 ] && usage && exit
+
+basedir="$( cd "$(dirname "$0")" >/dev/null 2>&1 || exit; pwd -P )"
+
+function _hid() {
+  "$basedir/hidapitester" --vidpid 046D/C900 --open --length 20 --send-output $1
+}
+
+#
+# On / Off
+function on() {
+  echo "--------------------------------"
+  echo " Turning the light on.."
+  echo "--------------------------------"
+  _hid 0x11,0xff,0x04,0x1c,0x01
+}
+
+function off() {
+  echo "--------------------------------"
+  echo " Turning the light off.."
+  echo "--------------------------------"
+  _hid 0x11,0xff,0x04,0x1c
+}
+
+#
+# Brightness 0..100
+function _brightness_to_range(){
+  min=0x14
+  max=0xfa
+  python3 -c "import math; print(math.floor( $min + (($1/100) * ($max - $min)) ))"
+}
+
+function set_brightness(){
+  echo "--------------------------------"
+  echo " Setting brightness to $1%.."
+  echo "--------------------------------"
+  _hid 0x11,0xff,0x04,0x4c,0x00,"$(_brightness_to_range $1)"
+}
+
+function glow(){
+  set_brightness 10
+}
+function dim(){
+  set_brightness 20
+}
+function normal() {
+  set_brightness 40
+}
+function medium() {
+  set_brightness 60
+}
+function bright(){
+  set_brightness 80
+}
+function brightest(){
+  set_brightness 100
+}
+
+#
+# Temperature 2700k..6500k
+function _temperature_to_bytes(){
+  python3 -c "temp = $1; print(temp.to_bytes(2, 'big')[0], \",\", temp.to_bytes(2, 'big')[1], sep='')"
+}
+
+function set_temperature(){
+  echo "--------------------------------"
+  echo " Setting temperature to $1k.."
+  echo "--------------------------------"
+  _hid 0x11,0xff,0x04,0x9c,"$(_temperature_to_bytes $1)"
+}
+
+function warmest() {
+  set_temperature 2700
+}
+function warm() {
+  set_temperature 3000
+}
+function mild() {
+  set_temperature 3500
+}
+function neutral() {
+  set_temperature 4000
+}
+function cool() {
+  set_temperature 5000
+}
+function cold() {
+  set_temperature 5500
+}
+function coldest() {
+  set_temperature 6500
+}
+
+for arg in "$@"
+do
+  $arg
+done

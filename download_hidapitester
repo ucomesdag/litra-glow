@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+# Copyright (C) 2022 Uco Mesdag
+# Description:  Download the hidapitester tool from
+#               https://github.com/todbot/hidapitester/releases/latest to the
+#               current directory.
+# Usage:        ./download_hidapitester
+
+# Requirement:  jq
+
+command -v jq &> /dev/null || (echo "Required command 'jq' not found!" && exit 1)
+
+basedir="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+download_zip=$(curl -s https://api.github.com/repos/todbot/hidapitester/releases/latest \
+  | jq -r ".assets[] | select( .name | test(\"macos-$(uname -m)\") ) | .browser_download_url")
+
+echo "Downloading: https://github.com/todbot/hidapitester/releases/latest"
+curl -skLo /tmp/hidapitester-latest.zip $download_zip
+unzip -o /tmp/hidapitester-latest.zip -d "$basedir"
+echo "  clean-up: /tmp/hidapitester-latest.zip"
+rm -f /tmp/hidapitester-latest.zip
+echo "Done."
