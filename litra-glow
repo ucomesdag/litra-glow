@@ -3,7 +3,7 @@
 # Copyright (C) 2022 Uco Mesdag
 # Description:  Control the Logitech Litra Glow light.
 # Usage:        ./litra-glow [OPTIONS]
-#   on|off           Turn the Litra Glow on or off.
+#   on|off|toggle   Turn the Litra Glow on or off, or toggle.
 
 #   glow             Set the brighness to 10%.
 #   dim              Set the brighness to 20%.
@@ -34,7 +34,7 @@ Usage:
 Control the Logitech Litra Glow.
 
 Options:
-    on|off           Turn the Litra Glow on or off.
+    on|off|toggle    Turn the Litra Glow on or off, or toggle.
 
     glow             Set the brighness to 10%.
     dim              Set the brighness to 20%.
@@ -79,6 +79,17 @@ function off() {
   echo "--------------------------------"
   _hid 0x11,0xff,0x04,0x1c
 }
+
+function toggle() {
+  IFS=' ' read -r -a status <<< "$("$basedir/hidapitester" --quiet --vidpid 046D/C900 --open --length 20 \
+    --send-output 0x11,0xff,0x04,0x01 --read-input | tail -1)"
+  if [[ ${status[4]} == "01" ]]; then  # "01" == on, "00" == off
+    off
+  else
+    on
+  fi
+}
+
 
 #
 # Brightness 0..100
